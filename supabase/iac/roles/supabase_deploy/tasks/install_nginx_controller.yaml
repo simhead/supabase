@@ -1,0 +1,126 @@
+# - name: Upload ssl cert private key
+#   copy:
+#     src: "{{ ansible_ssl_cert_private_key_file }}"
+#     dest: "/root/.ssh/ssl_cert_private_key.key"
+#     mode: "0600"
+
+# - name: Upload ssl cert file
+#   copy:
+#     src: "{{ ansible_ssl_cert_file }}"
+#     dest: "/root/.ssh/ssl_cert.pem"
+#     mode: "0600"
+
+# - name: Create ssl secret for rancher ingress tls
+#   shell: |
+#     kubectl create ns ingress-nginx
+#     kubectl -n ingress-nginx delete secret tls-ingress-nginx
+#     kubectl create secret tls tls-ingress-nginx -n ingress-nginx  \
+#     --cert=/root/.ssh/ssl_cert.pem \
+#     --key=/root/.ssh/ssl_cert_private_key.key
+#   ignore_errors: true
+  
+# - name: Remove ssl cert private key
+#   ansible.builtin.file:
+#     path: /root/.ssh/ssl_cert_private_key.key
+#     state: absent
+
+# - name: Remove ssl cert file
+#   ansible.builtin.file:
+#     path: /root/.ssh/ssl_cert.pem
+#     state: absent
+
+- name: Generate self-signed SSL certificate if not provided
+  command: >
+    openssl req -x509 -nodes -days 3650 -newkey rsa:2048
+    -keyout "{{ supabase_tls_path }}/client-key.pem"
+    -out "{{ supabase_tls_path }}/client-cert.pem"
+    -subj "/CN={{ supabase_common_name }}"
+  args:
+    creates: "{{ supabase_tls_path }}/client-key.pem"
+
+- name: Check if supabase-tls-secret exists
+  shell: |
+    kubectl get secret supabase-tls-secret -n {{ supabase_namespace }} > /dev/null 2>&1
+  register: secret_exists
+  ignore_errors: yes
+
+# kubectl create secret tls supabase-tls-secret --cert=/root/supabase/tls/client-cert.pem --key=/root/supabase/tls/client-key.pem -n ingress-nginx
+# kubectl create secret generic supabase-tls-secret --from-file=/root/supabase/tls/client-cert.pem --from-file=/root/supabase/tls/client-key.pem
+- name: Create a TLS Secret for supabase app if it does not exist
+  shell: |
+    kubectl create secret generic supabase-generic-secret \
+      --from-file={{ supabase_tls_path }}/client-cert.pem \
+      --from-file={{ supabase_tls_path }}/client-key.pem \
+      -n {{ supabase_namespace }}
+    kubectl create secret tls supabase-tls-secret \
+      --cert={{ supabase_tls_path }}/client-cert.pem \
+      --key={{ supabase_tls_path }}/client-key.pem \
+      -n {{ supabase_namespace }}
+  when: secret_exists.rc != 0  # Run only if the secret doesn't exist
+  register: tls_secret_creation
+  ignore_errors: yes  # Ignore if there's any error in secret creation
+
+- name: Add a nginx helm repository
+  kubernetes.core.helm_repository:
+    name: ingress-nginx
+    repo_url: https://kubernetes.github.io/ingress-nginx
+
+# using network loadbalancer
+# - name: Install nginx controller
+#   kubernetes.core.helm:
+#     name: ingress-nginx
+#     chart_ref: ingress-nginx/ingress-nginx
+#     chart_version: 4.10.0
+#     release_namespace: ingress-nginx
+#     create_namespace: true
+#     update_repo_cache: true
+#     values:
+#       controller:
+#         extraArgs:
+#           default-ssl-certificate: "ingress-nginx/{{ domain | replace('.', '-') }}"
+#         service:
+#           externalTrafficPolicy: Local
+#           annotations:
+#             oci.oraclecloud.com/load-balancer-type: nlb
+#             oci-network-load-balancer.oraclecloud.com/is-preserve-source: "false"
+#             oci-network-load-balancer.oraclecloud.com/oci-network-security-groups: "{{nsg_lb_oke_k8s_cluster}}"
+
+- name: Install nginx controller
+  kubernetes.core.helm:
+    name: ingress-nginx
+    chart_ref: ingress-nginx/ingress-nginx
+    chart_version: 4.10.0
+    release_namespace: ingress-nginx
+    create_namespace: true
+    update_repo_cache: true
+    values:
+      controller:
+        service:
+          externalTrafficPolicy: Cluster #Local
+          annotations:
+            # service.beta.kubernetes.io/oci-load-balancer-internal: "true"
+            service.beta.kubernetes.io/oci-load-balancer-shape: "flexible"
+            service.beta.kubernetes.io/oci-load-balancer-shape-flex-min: "10"
+            service.beta.kubernetes.io/oci-load-balancer-shape-flex-max: "10"
+            service.beta.kubernetes.io/oci-load-balancer-subnet1: "{{ lb2_subnet_id }}"
+            oci.oraclecloud.com/load-balancer-type: "lb"
+            # Optional static IP for load balancer
+          #   service.beta.kubernetes.io/oci-load-balancer-ip-mode: "IPV4"  # Use IPV4; switch to IPV6 if needed
+          #   service.beta.kubernetes.io/oci-load-balancer-health-check-protocol: "HTTP"  # Health check protocol
+          #   service.beta.kubernetes.io/oci-load-balancer-health-check-url-path: "/"     # Health check URL path
+          #   service.beta.kubernetes.io/oci-load-balancer-health-check-interval: "10000" # Interval in ms
+          #   service.beta.kubernetes.io/oci-load-balancer-health-check-timeout: "3000"   # Timeout in ms
+          #   service.beta.kubernetes.io/oci-load-balancer-health-check-healthy-threshold: "3"
+          #   service.beta.kubernetes.io/oci-load-balancer-health-check-unhealthy-threshold: "3"
+          loadBalancerIP: "{{ supabase_public_lp_ipaddress }}"  # Static IP, if assigned
+          ports:
+            http: 80
+            https: 443
+        config:
+          ssl-redirect: "true"
+          force-ssl-redirect: "true"
+        extraArgs:
+          default-ssl-certificate: "{{ supabase_namespace }}/supabase-tls-secret"
+
+- name: Get deployments in ingress-nginx namespace
+  shell: bash /root/check_deployment.sh ingress-nginx

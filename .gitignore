@@ -1,0 +1,37 @@
+# Ignore temporary files created by Ansible
+*.retry
+*.log
+
+# Ignore inventories, secrets, or variables that may contain sensitive data
+inventory/
+group_vars/
+host_vars/
+secrets.yml
+vault_password.txt
+
+# Ignore any Ansible facts cached locally
+.fact_cache/
+
+# Ignore roles installed by ansible-galaxy
+roles/*
+
+# Ignore private SSH keys and known hosts
+*.pem
+*.key
+known_hosts
+
+# Ignore temporary files, backups, and editor-specific files
+*.swp
+*.swo
+*~
+*.bak
+
+# Ignore Python virtual environment
+venv/
+.env/
+
+# Ignore custom YAML configuration files that may contain sensitive information
+config.yaml
+custom_vars.yaml
+vars/
+

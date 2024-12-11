@@ -1,0 +1,3 @@
+# The defaults folder contains a main.yaml file that defines default variables for the role.
+# Variables in defaults/main.yaml have the lowest precedence, meaning they can be easily overridden by other variables in your playbooks, inventory, or other variable files.
+base_domain: all

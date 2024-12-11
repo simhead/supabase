@@ -1,0 +1,173 @@
+# The tasks folder is where the actual automation steps of the role are defined.
+# The main.yaml file within tasks is typically the primary entry point for the tasks the role will execute.
+# Contains specific Ansible modules and commands to perform actions, such as deploying software, configuring services, or managing infrastructure resources.
+# If additional task files are needed for modularity or organization, they can be included from main.yaml to structure the workflow better.
+
+- name: Upload ssh key
+  copy:
+    src: "{{ ansible_ssh_private_key_file }}"
+    dest: "/root/.ssh/{{ base_domain }}.key"
+    mode: "0600"
+
+- name: Create oci cli config directory
+  file:
+    path: "/root/.oci/"
+    state: directory
+    mode: '0755'
+
+- name: Create kube config directory
+  file:
+    path: "/root/.kube/"
+    state: directory
+    mode: '0755'
+
+- name: "Create oci cli config"
+  template:
+    src: "oci_cli_config.j2"
+    dest: "/root/.oci/config"
+    mode: "0600"
+
+- name: Upload bastion user api key
+  copy:
+    src: "{{ ansible_bastion_iam_private_key_file }}"
+    dest: "/root/.oci/bastion.key"
+    mode: "0600"
+
+- name: Install oci cli
+  shell: |
+    wget -q https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh -O /root/install.sh
+    chmod +x /root/install.sh
+    /root/install.sh --accept-all-defaults
+    rm  /root/install.sh
+    cp /root/bin/oci /usr/local/bin/
+
+- name: Generate kube config for oke k8s cluster
+  shell: |
+    oci ce cluster create-kubeconfig --cluster-id {{oke_k8s_cluster_id}} --file /root/.kube/oke_k8s_config --region {{region}} --token-version 2.0.0  --kube-endpoint PRIVATE_ENDPOINT
+    chmod 600 /root/.kube/oke_k8s_config
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install Pip3
+  apt:
+    name: python3-pip
+    update_cache: yes
+
+
+- name: Install dependencies
+  package:
+    name:
+      - python3
+      - curl
+      - libpq-dev
+      - telnet
+      - netcat
+      # - postgresql
+
+- name: Install kubernetes pre requisites
+  pip:
+    name: 
+      - kubernetes
+      - psycopg2
+
+- name: Install oci sdk
+  pip:
+    name: 
+      - pyOpenSSL
+      - oci
+
+- name: Remove OpenSSL python packages
+  shell: |
+    rm -R /usr/lib/python3/dist-packages/OpenSSL
+    pip3 install pyOpenSSL --upgrade
+
+
+- name: Install kubectl
+  shell: |
+    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+- name: Install helm
+  shell: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+- name: Install kubectx
+  shell: |
+    wget -q https://github.com/ahmetb/kubectx/releases/download/v0.9.5/kubectx -O /usr/local/bin/kubectx
+    chmod +x /usr/local/bin/kubectx
+
+- name: Install kubens
+  shell: |
+    wget -q https://github.com/ahmetb/kubectx/releases/download/v0.9.5/kubens -O /usr/local/bin/kubens
+    chmod +x /usr/local/bin/kubens
+
+- name: Install k9s
+  ansible.builtin.unarchive:
+    src: https://github.com/derailed/k9s/releases/download/v0.32.4/k9s_Linux_amd64.tar.gz
+    dest: /usr/local/bin/
+    include: 
+      - "k9s"
+    remote_src: yes
+
+# - name: Install istioctl
+#   shell: |
+#     export ISTIO_VERSION=1.21.0
+#     curl -L https://istio.io/downloadIstio > /root/istio_install.sh
+#     chmod +x /root/istio_install.sh
+#     cd /root
+#     ./istio_install.sh
+#     rm /root/istio_install.sh
+
+# - name: Deploy NGINX Ingress Controller
+#   hosts: all
+#   become: true
+#   tasks:
+#     - name: Check if 'ingress-nginx' namespace exists
+#       command: kubectl get namespace ingress-nginx
+#       register: ingress_namespace_check
+#       ignore_errors: true
+
+#     - name: Create 'global-values.yaml' for Helm
+#       copy:
+#         dest: /tmp/global-values.yaml
+#         content: |
+#           controller:
+#             service:
+#               annotations:
+#                 service.beta.kubernetes.io/oci-load-balancer-shape: "flexible"
+#                 service.beta.kubernetes.io/oci-load-balancer-shape-flex-min: "10"
+#                 service.beta.kubernetes.io/oci-load-balancer-shape-flex-max: "10"
+#                 service.beta.kubernetes.io/oci-load-balancer-subnet1: "{{ lb2_subnet_id }}"
+#               # loadBalancerIP: "{{ lb_pip }}"
+#       when: ingress_namespace_check.rc != 0
+
+#     - name: Add NGINX Ingress Controller Helm repo
+#       ansible.builtin.command: >
+#         helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+#       when: ingress_namespace_check.rc != 0
+
+#     - name: Update Helm repo
+#       ansible.builtin.command: helm repo update
+#       when: ingress_namespace_check.rc != 0
+
+#     - name: Install NGINX Ingress Controller with Helm
+#       ansible.builtin.command: >
+#         helm upgrade --install ingress-nginx ingress-nginx
+#         --repo https://kubernetes.github.io/ingress-nginx
+#         --namespace ingress-nginx
+#         --create-namespace
+#         -f /tmp/global-values.yaml
+#       when: ingress_namespace_check.rc != 0
+
+- name: set environment values
+  blockinfile:
+    path: /root/.bashrc
+    block: |
+      export KUBECONFIG=/root/.kube/oke_k8s_config
+      # export PATH=/root/istio-1.21.0/bin:$PATH
+      alias k=kubectl
+      alias kctx=kubectx
+      alias kns=kubens
+    state: present
+    create: true

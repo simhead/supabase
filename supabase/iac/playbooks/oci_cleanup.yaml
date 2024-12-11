@@ -1,0 +1,4 @@
+- hosts: bastion
+  become: true
+  roles:
+    - supabase.iac.oci_cleanup

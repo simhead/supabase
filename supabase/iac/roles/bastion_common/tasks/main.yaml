@@ -1,0 +1,18 @@
+# The tasks folder is where the actual automation steps of the role are defined.
+# The main.yaml file within tasks is typically the primary entry point for the tasks the role will execute.
+# Contains specific Ansible modules and commands to perform actions, such as deploying software, configuring services, or managing infrastructure resources.
+# If additional task files are needed for modularity or organization, they can be included from main.yaml to structure the workflow better.
+- name: Upload ssh key
+  copy:
+    src: "{{ ansible_ssh_private_key_file }}"
+    dest: "/root/.ssh/{{ base_domain }}.key"
+    mode: "0600"
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install dependencies
+  package:
+    name:
+      - python3

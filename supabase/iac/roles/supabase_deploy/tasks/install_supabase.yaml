@@ -1,0 +1,25 @@
+- name: Clone Supabase Kubernetes repository
+  git:
+    repo: https://github.com/supabase-community/supabase-kubernetes
+    dest: /root/supabase/github
+
+- name: Change to the charts directory
+  ansible.builtin.command: 
+    cmd: "cd /root/supabase/github/charts/supabase && pwd"
+  register: supabase_chart_dir
+  changed_when: false
+
+- name: Define supabase helm values.yaml for deployment
+  template:
+    src: "values.oke.yaml.j2"
+    dest: "/root/supabase/values.oke.yaml"
+    mode: '0755'
+
+- name: Install the Helm chart
+  ansible.builtin.shell:
+    cmd: |
+      cd /root/supabase/github/charts/supabase
+      helm install {{ supabase_namespace }} -f /root/supabase/values.oke.yaml .
+  args:
+    chdir: "/root/supabase/github/charts/supabase"
+

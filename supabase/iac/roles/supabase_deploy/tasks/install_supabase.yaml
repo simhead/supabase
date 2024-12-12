@@ -5,7 +5,7 @@
 
 - name: Change to the charts directory
   shell: |
-    "cd /root/supabase/github/charts/supabase && pwd"
+    cd /root/supabase/github/charts/supabase && pwd
   register: supabase_chart_dir
   changed_when: false
 

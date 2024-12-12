@@ -18,7 +18,7 @@
 - name: Install the Helm chart
   shell: |
     cd /root/supabase/github/charts/supabase
-    helm install -n {{ supabase_namespace }} {{ supabase_namespace }} -f /root/supabase/values.oke.yaml .
+    helm install {{ supabase_namespace }} -n {{ supabase_namespace }} -f /root/supabase/values.oke.yaml .
   args:
     chdir: "/root/supabase/github/charts/supabase"
 

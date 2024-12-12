@@ -4,8 +4,8 @@
     dest: /root/supabase/github
 
 - name: Change to the charts directory
-  ansible.builtin.command: 
-    cmd: "cd /root/supabase/github/charts/supabase && pwd"
+  shell: |
+    "cd /root/supabase/github/charts/supabase && pwd"
   register: supabase_chart_dir
   changed_when: false
 
@@ -16,10 +16,9 @@
     mode: '0755'
 
 - name: Install the Helm chart
-  ansible.builtin.shell:
-    cmd: |
-      cd /root/supabase/github/charts/supabase
-      helm install {{ supabase_namespace }} -f /root/supabase/values.oke.yaml .
+  shell: |
+    cd /root/supabase/github/charts/supabase
+    helm install {{ supabase_namespace }} -f /root/supabase/values.oke.yaml .
   args:
     chdir: "/root/supabase/github/charts/supabase"
 

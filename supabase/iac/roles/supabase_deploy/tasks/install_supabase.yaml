@@ -1,6 +1,13 @@
-- name: Check if jwt_anonKey and jwt_serviceKey are empty
-  command: echo
-  register: jwt_keys_check
+- name: Check if jwt_anonKey and jwt_serviceKey are defined or empty
+  set_fact:
+    jwt_anonKey: "{{ jwt_anonKey if jwt_anonKey is defined else '' }}"
+    jwt_serviceKey: "{{ jwt_serviceKey if jwt_serviceKey is defined else '' }}"
+
+- name: PRE - Debug the generated keys
+  debug:
+    msg:
+      - "jwt_anonKey: {{ jwt_anonKey }}"
+      - "jwt_serviceKey: {{ jwt_serviceKey }}"
 
 - name: Copy the JWT generation script to the target machine
   template:
@@ -11,15 +18,15 @@
 - name: Run the JWT generation script if keys are empty
   shell: /tmp/generate_jwt_keys.sh
   register: jwt_keys_output
-  when: jwt_keys_check.stdout.find('jwt_anonKey') == -1 or jwt_keys_check.stdout.find('jwt_serviceKey') == -1
+  when: jwt_anonKey == '' or jwt_serviceKey == ''
 
-- name: Parse the generated keys and set facts
+- name: Parse the generated keys and update facts
   set_fact:
     jwt_anonKey: "{{ jwt_keys_output.stdout_lines | select('search', 'jwt_anonKey') | first | regex_replace('jwt_anonKey=', '') }}"
     jwt_serviceKey: "{{ jwt_keys_output.stdout_lines | select('search', 'jwt_serviceKey') | first | regex_replace('jwt_serviceKey=', '') }}"
   when: jwt_keys_output is defined
 
-- name: Debug the generated keys
+- name: POST - Debug the generated keys
   debug:
     msg:
       - "jwt_anonKey: {{ jwt_anonKey }}"

@@ -1,20 +1,20 @@
 secret:
   jwt:
-    anonKey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE
-    serviceKey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q
-    secret: your-super-secret-jwt-token-with-at-least-32-characters-long
+    anonKey: {{ jwt_anonKey }}
+    serviceKey: {{ jwt_serviceKey }}
+    secret: {{ jwt_secret }}
   smtp:
-    username: your-mail@{{ supabase_ingress_url }}
-    password: example123456
+    username: {{ smtp_username }}@{{ supabase_ingress_url }}
+    password: {{ supabase_password }}
   dashboard:
-    username: supabase
-    password: this_password_is_insecure_and_should_be_updated
+    username: {{ dashboard_username }}
+    password: {{ supabase_password }}
   db:
-    username: postgres
-    password: example123456
-    database: postgres
+    username: {{ postgres_user }}
+    password: {{ supabase_password }}
+    database: {{ postgres_db }}
   analytics:
-    apiKey: your-super-secret-and-long-logflare-key
+    apiKey: {{ supabase_password }}
 
 db:
   enabled: true
@@ -52,10 +52,10 @@ auth:
     GOTRUE_SITE_URL: http://{{ supabase_ingress_url }}
     GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
     GOTRUE_MAILER_AUTOCONFIRM: "true"
-    GOTRUE_SMTP_ADMIN_EMAIL: "your-mail@{{ supabase_ingress_url }}"
+    GOTRUE_SMTP_ADMIN_EMAIL: "admin@{{ supabase_ingress_url }}"
     GOTRUE_SMTP_HOST: "smtp.{{ supabase_ingress_url }}"
     GOTRUE_SMTP_PORT: "587"
-    GOTRUE_SMTP_SENDER_NAME: "your-mail@{{ supabase_ingress_url }}"
+    GOTRUE_SMTP_SENDER_NAME: "sender@{{ supabase_ingress_url }}"
 
 rest:
   image:

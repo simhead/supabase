@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Construct the header
+jwt_header=$(echo -n '{"alg":"HS256","typ":"JWT"}' | base64 | sed s/\+/-/g | sed 's/\//_/g' | sed -E s/=+$//)
+
+# Construct iat and exp, iat use current time and exp for 5 years later
+iat=$(date +%s)
+exp=$(date -d "5 years" +%s)
+
+# Construct the payload
+a_payload=$(echo -n '{"role":"anon","iss":"supabase","iat":'$iat',"exp":'$exp'}' | base64 | sed s/\+/-/g | sed 's/\//_/g' | sed -E s/=+$// | tr -d '\n')
+s_payload=$(echo -n '{"role":"service_role","iss":"supabase","iat":'$iat',"exp":'$exp'}' | base64 | sed s/\+/-/g | sed 's/\//_/g' | sed -E s/=+$// | tr -d '\n')
+
+# Construct a 40-character secret to sign the token
+secret=$(LC_CTYPE=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 40 | xargs)
+hexsecret=$(echo -n "$secret" | xxd -p | tr -d '\n')
+
+# Calculate hmac signature
+a_hmac_signature=$(echo -n "${jwt_header}.${a_payload}" | openssl dgst -sha256 -mac HMAC -macopt hexkey:$hexsecret -binary | base64 | sed s/\+/-/g | sed 's/\//_/g' | sed -E s/=+$//)
+s_hmac_signature=$(echo -n "${jwt_header}.${s_payload}" | openssl dgst -sha256 -mac HMAC -macopt hexkey:$hexsecret -binary | base64 | sed s/\+/-/g | sed 's/\//_/g' | sed -E s/=+$//)
+
+# Create the full tokens
+jwt_anonKey="${jwt_header}.${a_payload}.${a_hmac_signature}"
+jwt_serviceKey="${jwt_header}.${s_payload}.${s_hmac_signature}"
+
+# Print the keys
+echo "jwt_anonKey=$jwt_anonKey"
+echo "jwt_serviceKey=$jwt_serviceKey"

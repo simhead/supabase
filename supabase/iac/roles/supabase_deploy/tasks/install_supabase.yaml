@@ -24,7 +24,7 @@
     msg:
       - "jwt_anonKey: {{ jwt_anonKey }}"
       - "jwt_serviceKey: {{ jwt_serviceKey }}"
-      
+
 - name: Clone Supabase Kubernetes repository
   git:
     repo: https://github.com/supabase-community/supabase-kubernetes
@@ -42,10 +42,23 @@
     dest: "/root/supabase/values.oke.yaml"
     mode: '0755'
 
-- name: Install the Helm chart
+- name: Check if Helm release exists
+  shell: helm list -n {{ supabase_namespace }} --filter {{ supabase_namespace }} -q
+  register: helm_release_check
+  changed_when: false
+
+- name: Install or upgrade the Helm chart
   shell: |
     cd /root/supabase/github/charts/supabase
+    {% if helm_release_check.stdout == '' %}
     helm install {{ supabase_namespace }} -n {{ supabase_namespace }} -f /root/supabase/values.oke.yaml .
+    {% else %}
+    helm upgrade {{ supabase_namespace }} -n {{ supabase_namespace }} -f /root/supabase/values.oke.yaml .
+    {% endif %}
   args:
     chdir: "/root/supabase/github/charts/supabase"
+  register: helm_install_or_upgrade
 
+- name: Debug Helm result
+  debug:
+    msg: "Helm {{ 'installed' if helm_release_check.stdout == '' else 'upgraded' }} successfully"

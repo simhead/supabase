@@ -5,16 +5,16 @@ secret:
     secret: {{ jwt_secret }}
   smtp:
     username: {{ smtp_username }}@{{ supabase_ingress_url }}
-    password: {{ supabase_password }}
+    password: {{ smtp_password }}
   dashboard:
     username: {{ dashboard_username }}
-    password: {{ supabase_password }}
+    password: {{ dashboard_password }}
   db:
     username: {{ postgres_user }}
-    password: {{ supabase_password }}
+    password: {{ postgres_password }}
     database: {{ postgres_db }}
   analytics:
-    apiKey: {{ supabase_password }}
+    apiKey: {{ dashboard_password }}
 
 db:
   enabled: true

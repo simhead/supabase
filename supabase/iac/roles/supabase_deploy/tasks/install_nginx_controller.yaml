@@ -85,6 +85,21 @@
 #             oci-network-load-balancer.oraclecloud.com/is-preserve-source: "false"
 #             oci-network-load-balancer.oraclecloud.com/oci-network-security-groups: "{{nsg_lb_oke_k8s_cluster}}"
 
+- name: Check if ingress-nginx Helm release exists
+  kubernetes.core.helm_info:
+    name: ingress-nginx
+    release_namespace: ingress-nginx
+  register: ingress_nginx_status
+  ignore_errors: true  # Ignore errors if the release does not exist
+
+- name: Delete old ingress-nginx Helm release if it exists
+  kubernetes.core.helm:
+    name: ingress-nginx
+    release_namespace: ingress-nginx
+    state: absent
+  when: ingress_nginx_status.status is defined
+  ignore_errors: false  # Ensure deletion failure breaks the playbook
+
 - name: Install nginx controller
   kubernetes.core.helm:
     name: ingress-nginx

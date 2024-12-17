@@ -45,7 +45,7 @@
   set_fact:
     jwt_anonKey: "{{ jwt_keys_output.stdout_lines | select('search', 'jwt_anonKey') | first | regex_replace('jwt_anonKey=', '') }}"
     jwt_serviceKey: "{{ jwt_keys_output.stdout_lines | select('search', 'jwt_serviceKey') | first | regex_replace('jwt_serviceKey=', '') }}"
-  when: jwt_keys_output.stdout_line is defined
+  when: jwt_keys_output.stdout_lines is defined and jwt_keys_output.stdout_lines | length > 0
 
 - name: POST - Debug the generated keys
   debug:

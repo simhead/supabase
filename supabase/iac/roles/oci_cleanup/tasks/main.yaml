@@ -21,3 +21,19 @@
     volume_id: "{{item.id}}"
     state: absent
   with_items: '{{block_volume_list_result.volumes}}'
+
+- name: List all Reserved Public IPs
+  oracle.oci.oci_core_public_ip_facts:
+    compartment_id: "{{ compartment_id }}"
+    filters:
+      - name: "lifetime"
+        values: ["RESERVED"]
+  register: reserved_public_ip_list_result
+
+- name: Delete OCI Reserved Public IPv4 Addresses
+  oracle.oci.oci_core_public_ip:
+    public_ip_id: "{{ item.id }}"
+    state: absent
+  with_items: "{{ reserved_public_ip_list_result.public_ips }}"
+  loop_control:
+    label: "{{ item.display_name }}"

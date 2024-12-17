@@ -95,11 +95,22 @@
 - name: Delete old ingress-nginx Helm release if it exists
   shell: |
     helm uninstall ingress-nginx -n ingress-nginx
-  args:
-    warn: false  # Suppress warnings about the shell module
+  # args:
+  #   warn: false  # Suppress warnings about the shell module
   register: helm_uninstall_output
   when: ingress_nginx_status.status is defined
 
+- name: List all Helm installed apps
+  shell: |
+    helm ls -A
+  register: helm_list_output
+  changed_when: false
+  failed_when: helm_list_output.rc != 0
+
+- name: Debug list of installed Helm apps
+  debug:
+    msg: "{{ helm_list_output.stdout_lines }}"
+    
 - name: Install nginx controller
   kubernetes.core.helm:
     name: ingress-nginx

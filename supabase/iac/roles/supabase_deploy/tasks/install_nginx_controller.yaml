@@ -109,7 +109,7 @@
 
 - name: Debug list of installed Helm apps
   debug:
-    msg: "{{ helm_list_output.stdout_lines }}"
+    msg: "{{ helm_list_output.stdout_lines }} AND {{ ingress_nginx_status.status }}"
     
 - name: Install nginx controller
   kubernetes.core.helm:

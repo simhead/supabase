@@ -98,8 +98,6 @@
   args:
     warn: false  # Suppress warnings about the shell module
   register: helm_uninstall_output
-  failed_when: helm_uninstall_output.rc != 0 and "release: not found" not in helm_uninstall_output.stderr
-  changed_when: "'uninstalled' in helm_uninstall_output.stdout"
   when: ingress_nginx_status.status is defined
 
 - name: Install nginx controller

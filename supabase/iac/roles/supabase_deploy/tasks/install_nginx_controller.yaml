@@ -93,12 +93,14 @@
   ignore_errors: true  # Ignore errors if the release does not exist
 
 - name: Delete old ingress-nginx Helm release if it exists
-  kubernetes.core.helm:
-    name: ingress-nginx
-    release_namespace: ingress-nginx
-    state: absent
+  shell: |
+    helm uninstall ingress-nginx -n ingress-nginx
+  args:
+    warn: false  # Suppress warnings about the shell module
+  register: helm_uninstall_output
+  failed_when: helm_uninstall_output.rc != 0 and "release: not found" not in helm_uninstall_output.stderr
+  changed_when: "'uninstalled' in helm_uninstall_output.stdout"
   when: ingress_nginx_status.status is defined
-  ignore_errors: false  # Ensure deletion failure breaks the playbook
 
 - name: Install nginx controller
   kubernetes.core.helm:

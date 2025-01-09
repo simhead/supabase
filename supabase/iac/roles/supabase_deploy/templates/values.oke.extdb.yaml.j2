@@ -37,13 +37,6 @@ db:
         - -U
         - postgres
     initialDelaySeconds: 3
-  environment:
-    # Override the database hostname if using external database
-    DB_HOST: {{ postgres_host }}
-    # DB_USER: {{ postgres_user }}
-    # DB_PORT: 5432
-    # DB_DRIVER: postgres
-    # DB_SSL: disable  # disable, allow, prefer, require, verify-ca, verify-full
   persistence:
     enabled: false
 
@@ -65,6 +58,12 @@ auth:
   image:
     tag: v2.143.0
   environment:
+    # Override the database hostname if using external database
+    DB_HOST: {{ postgres_host }}
+    # DB_USER: {{ postgres_user }}
+    # DB_PORT: 5432
+    # DB_DRIVER: postgres
+    # DB_SSL: disable  # disable, allow, prefer, require, verify-ca, verify-full
     API_EXTERNAL_URL: http://{{ supabase_ingress_url }}
     GOTRUE_SITE_URL: http://{{ supabase_ingress_url }}
     GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"

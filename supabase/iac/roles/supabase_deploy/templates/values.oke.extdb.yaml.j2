@@ -63,7 +63,7 @@ auth:
     DB_USER: {{ postgres_user }}
     # DB_PORT: 5432
     # DB_DRIVER: postgres
-    # DB_SSL: disable  # disable, allow, prefer, require, verify-ca, verify-full
+    DB_SSL: allow  # disable, allow, prefer, require, verify-ca, verify-full
     API_EXTERNAL_URL: http://{{ supabase_ingress_url }}
     GOTRUE_SITE_URL: http://{{ supabase_ingress_url }}
     GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"

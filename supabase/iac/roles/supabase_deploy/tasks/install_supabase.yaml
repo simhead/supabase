@@ -81,6 +81,10 @@
   register: helm_release_check
   changed_when: false
 
+- name: Print the value of postgres_host
+  debug:
+    msg: "The value of postgres_host is: '{{ postgres_host }}'"
+
 - name: Determine which Helm values file to use
   set_fact:
     helm_values_file: >
@@ -90,6 +94,10 @@
       /root/supabase/values.oke.extdb.yaml
       {% endif %}
 
+- name: Print the chosen Helm values file
+  debug:
+    msg: "The chosen Helm values file is: '{{ helm_values_file }}'"
+    
 - name: Install or upgrade the Helm chart
   shell: |
     cd /root/supabase/github/charts/supabase

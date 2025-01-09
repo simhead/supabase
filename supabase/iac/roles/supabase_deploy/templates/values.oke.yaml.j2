@@ -87,6 +87,13 @@ meta:
 storage:
   image:
     tag: v0.46.4
+  environment:
+    # If using this chart's minio, skip the endpoint and protocol below
+    # GLOBAL_S3_ENDPOINT: http://minio:9000
+    # GLOBAL_S3_PROTOCOL: http
+    STORAGE_BACKEND: s3
+    GLOBAL_S3_FORCE_PATH_STYLE: true
+    AWS_DEFAULT_REGION: stub
   livenessProbe:
     httpGet:
       path: /status

@@ -25,9 +25,9 @@
 - name: List all Reserved Public IPs
   oracle.oci.oci_core_public_ip_facts:
     compartment_id: "{{ compartment_id }}"
-    filters:
-      - name: "lifetime"
-        values: ["RESERVED"]
+    # filters:
+    #   - name: "lifetime"
+    #     values: ["RESERVED"]
   register: reserved_public_ip_list_result
 
 - name: Delete OCI Reserved Public IPv4 Addresses

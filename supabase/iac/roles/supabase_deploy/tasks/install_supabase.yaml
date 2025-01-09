@@ -67,7 +67,7 @@
 - name: Define supabase helm values.yaml for deployment
   template:
     src: "values.oke.extdb.yaml.j2"
-    dest: "/root/supabase/values.oke.extdb.yaml"
+    dest: "/root/supabase/values.oke.yaml"
     mode: '0755'
 
 - name: Check if Helm release exists

@@ -46,6 +46,7 @@
 
 # kubectl create secret tls supabase-tls-secret --cert=/root/supabase/tls/client-cert.pem --key=/root/supabase/tls/client-key.pem -n ingress-nginx
 # kubectl create secret generic supabase-tls-secret --from-file=/root/supabase/tls/client-cert.pem --from-file=/root/supabase/tls/client-key.pem
+# NOTE: these certs are also used by kong server
 - name: Create a TLS Secret for supabase app if it does not exist
   shell: |
     kubectl create secret generic supabase-generic-secret \

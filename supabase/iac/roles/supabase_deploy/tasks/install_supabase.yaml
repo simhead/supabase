@@ -90,3 +90,21 @@
 - name: Debug Helm result
   debug:
     msg: "Helm {{ 'installed' if helm_release_check.stdout == '' else 'upgraded' }} successfully"
+
+- name: Run MinIO client Pod
+  shell: |
+    kubectl run minio-client --namespace={{ supabase_namespace }} --image=minio/mc:latest
+    --command -- /bin/sh -c "sleep 3600"
+  register: run_minio_client_result
+  failed_when: "'AlreadyExists' not in run_minio_client_result.stderr"
+  changed_when: "'AlreadyExists' not in run_minio_client_result.stderr"
+
+- name: Wait for the MinIO client Pod to be ready
+  shell: |
+    kubectl wait --namespace={{ supabase_namespace }} --for=condition=Ready pod/minio-client --timeout=60s
+  register: wait_minio_client_result
+  failed_when: "'condition met' not in wait_minio_client_result.stdout"
+
+- name: Set MinIO alias
+  shell: |
+    kubectl exec --namespace={{ supabase_namespace }} -it minio-client -- /bin/sh -c "mc alias set myminio http://supabase-app-supabase-minio:9000 keyId accessKey"

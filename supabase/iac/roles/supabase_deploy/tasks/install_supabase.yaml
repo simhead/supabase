@@ -84,7 +84,7 @@
 - name: Determine which Helm values file to use
   set_fact:
     helm_values_file: >
-      {% if {{ postgres_host }} | length == 0 %}
+      {% if postgres_host | length == 0 %}
       /root/supabase/values.oke.yaml
       {% else %}
       /root/supabase/values.oke.extdb.yaml

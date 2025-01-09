@@ -1,0 +1,254 @@
+secret:
+  jwt:
+    anonKey: {{ jwt_anonKey }}
+    serviceKey: {{ jwt_serviceKey }}
+    secret: {{ jwt_secret }}
+  smtp:
+    username: {{ smtp_username }}@{{ supabase_ingress_url }}
+    password: {{ smtp_password }}
+  dashboard:
+    username: {{ dashboard_username }}
+    password: {{ dashboard_password }}
+  db:
+    username: {{ postgres_user }}
+    password: {{ postgres_password }}
+    database: {{ postgres_db }}
+  analytics:
+    apiKey: {{ dashboard_password }}
+
+  # S3 credentials for storage object bucket
+  s3:
+    keyId: "keyId"
+    accessKey: "accessKey"
+    # specify existing secret, which takes precedence over variables above
+    # secretRef: ""
+    # override secret keys for existing secret refs
+    # secretRefKey:
+    #   keyId: keyId
+    #   accessKey: accessKey
+db:
+  enabled: true
+  image:
+    tag: 15.1.0.147
+  livenessProbe:
+    exec:
+      command:
+        - pg_isready
+        - -U
+        - postgres
+    initialDelaySeconds: 3
+  environment:
+    # Override the database hostname if using external database
+    DB_HOST: {{ postgres_host }}
+    # DB_USER: {{ postgres_user }}
+    # DB_PORT: 5432
+    # DB_DRIVER: postgres
+    # DB_SSL: disable  # disable, allow, prefer, require, verify-ca, verify-full
+  persistence:
+    enabled: false
+
+studio:
+  image:
+    tag: 20240326-5e5586d
+  environment:
+    STUDIO_DEFAULT_ORGANIZATION: "My Organization"
+    STUDIO_DEFAULT_PROJECT: "My Project"
+    SUPABASE_PUBLIC_URL: http://{{ supabase_ingress_url }}/
+    NEXT_PUBLIC_ENABLE_LOGS: "true"
+  livenessProbe:
+    httpGet:
+      path: /api/profile
+      port: 3000
+    initialDelaySeconds: 3
+
+auth:
+  image:
+    tag: v2.143.0
+  environment:
+    API_EXTERNAL_URL: http://{{ supabase_ingress_url }}
+    GOTRUE_SITE_URL: http://{{ supabase_ingress_url }}
+    GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+    GOTRUE_MAILER_AUTOCONFIRM: "true"
+    GOTRUE_SMTP_ADMIN_EMAIL: "admin@{{ supabase_ingress_url }}"
+    GOTRUE_SMTP_HOST: "smtp.{{ supabase_ingress_url }}"
+    GOTRUE_SMTP_PORT: "587"
+    GOTRUE_SMTP_SENDER_NAME: "sender@{{ supabase_ingress_url }}"
+
+rest:
+  image:
+    tag: v12.0.1
+
+realtime:
+  image:
+    tag: v2.27.5
+  livenessProbe:
+    httpGet:
+      path: /
+      port: 4000
+    initialDelaySeconds: 3
+
+meta:
+  image:
+    tag: v0.80.0
+
+storage:
+  image:
+    tag: v0.46.4
+  environment:
+    # If using this chart's minio, skip the endpoint and protocol below
+    # GLOBAL_S3_ENDPOINT: http://minio:9000
+    # GLOBAL_S3_PROTOCOL: http
+    STORAGE_BACKEND: s3
+    GLOBAL_S3_FORCE_PATH_STYLE: true
+    AWS_DEFAULT_REGION: stub
+  livenessProbe:
+    httpGet:
+      path: /status
+      port: 5000
+    initialDelaySeconds: 3
+  persistence:
+    enabled: false
+
+imgproxy:
+  image:
+    tag: v3.8.0
+  environment:
+    IMGPROXY_ENABLE_WEBP_DETECTION: "true"
+  livenessProbe:
+    exec:
+      command:
+        - imgproxy
+        - health
+    initialDelaySeconds: 3
+  persistence:
+    enabled: false
+
+kong:
+  image:
+    repository: kong
+    tag: 2.8.1
+  environment:
+    KONG_DECLARATIVE_CONFIG: /usr/local/kong/kong.yml
+    KONG_LOG_LEVEL: info
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+    tls: #[]
+      - secretName: supabase-tls-secret
+      #   hosts:
+      #     - {{ supabase_ingress_url }}
+    hosts:
+      - host: {{ supabase_ingress_url }}
+        paths:
+          - path: /
+            pathType: Prefix
+
+analytics:
+  image:
+    tag: 1.4.0
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 4000
+    initialDelaySeconds: 3
+
+vector:
+  image:
+    tag: 0.34.0-alpine
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 9001
+    initialDelaySeconds: 3
+  ## Vector requires logs from the control plane to function.
+  ## This is normally stored in /var/log/pods
+  ## Modify these values according to your environment.
+  volumeMounts:
+    - name: pod-logs
+      mountPath: /var/log/pods
+  volumes:
+    - name: pod-logs
+      hostPath:
+        path: /var/log/pods
+
+functions:
+  image:
+    tag: v1.41.2
+
+# minio
+minio:
+  enabled: true
+  image:
+    repository: minio/minio
+    pullPolicy: IfNotPresent
+    tag: "latest"
+  imagePullSecrets: []
+  replicaCount: 1
+  nameOverride: ""
+  fullnameOverride: ""
+  livenessProbe: {}
+  readinessProbe: {}
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: true
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ""
+  podAnnotations: {}
+  podSecurityContext: {}
+    # fsGroup: 2000
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+  service:
+    type: ClusterIP
+    port: 9000
+  environment: {}
+  # Mount user functions
+  # volumeMounts:
+  #   - name: my_functions
+  #     mountPath: /home/deno/functions/main/main
+  # volumes:
+  #   - name: my_functions
+  #     secret:
+  #       defaultMode: 733
+  #       secretName: my_secret
+  #       items:
+  #       - key: my_secret.ts
+  #         path: name_of_file_in_container.ts
+  resources: {}
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+  persistence:
+    enabled: false
+    storageClassName: ""
+    annotations: {}
+    size: 10Gi
+    accessModes:
+      - ReadWriteOnce
+    class: ""
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}

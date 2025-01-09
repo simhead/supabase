@@ -94,7 +94,7 @@
 - name: Run MinIO client Pod
   shell: |
     kubectl run minio-client --namespace={{ supabase_namespace }} --image=minio/mc:latest
-    --command -- /bin/sh -c "sleep 3600"
+    --command -- "sleep 3600"
   register: run_minio_client_result
   failed_when: "'AlreadyExists' not in run_minio_client_result.stderr"
   changed_when: "'AlreadyExists' not in run_minio_client_result.stderr"
@@ -107,4 +107,4 @@
 
 - name: Set MinIO alias
   shell: |
-    kubectl exec --namespace={{ supabase_namespace }} -it minio-client -- /bin/sh -c "mc alias set myminio http://supabase-app-supabase-minio:9000 keyId accessKey"
+    kubectl exec --namespace={{ supabase_namespace }} -it minio-client -- "mc alias set myminio http://supabase-app-supabase-minio:9000 keyId accessKey"

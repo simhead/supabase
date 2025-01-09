@@ -70,22 +70,49 @@
     dest: "/root/supabase/values.oke.yaml"
     mode: '0755'
 
+- name: Define supabase helm values.yaml for deployment using external DB
+  template:
+    src: "values.oke.extdb.yaml.j2"
+    dest: "/root/supabase/values.oke.extdb.yaml"
+    mode: '0755'
+
 - name: Check if Helm release exists
   shell: helm list -n {{ supabase_namespace }} --filter {{ supabase_namespace }} -q
   register: helm_release_check
   changed_when: false
 
+- name: Determine which Helm values file to use
+  set_fact:
+    helm_values_file: >
+      {% if {{ postgres_host }} | length == 0 %}
+      /root/supabase/values.oke.yaml
+      {% else %}
+      /root/supabase/values.oke.extdb.yaml
+      {% endif %}
+
 - name: Install or upgrade the Helm chart
   shell: |
     cd /root/supabase/github/charts/supabase
     {% if helm_release_check.stdout == '' %}
-    helm install {{ supabase_namespace }} -n {{ supabase_namespace }} -f /root/supabase/values.oke.yaml .
+    helm install {{ supabase_namespace }} -n {{ supabase_namespace }} -f {{ helm_values_file }} .
     {% else %}
-    helm upgrade {{ supabase_namespace }} -n {{ supabase_namespace }} -f /root/supabase/values.oke.yaml .
+    helm upgrade {{ supabase_namespace }} -n {{ supabase_namespace }} -f {{ helm_values_file }} .
     {% endif %}
   args:
     chdir: "/root/supabase/github/charts/supabase"
   register: helm_install_or_upgrade
+
+# - name: Install or upgrade the Helm chart
+#   shell: |
+#     cd /root/supabase/github/charts/supabase
+#     {% if helm_release_check.stdout == '' %}
+#     helm install {{ supabase_namespace }} -n {{ supabase_namespace }} -f /root/supabase/values.oke.yaml .
+#     {% else %}
+#     helm upgrade {{ supabase_namespace }} -n {{ supabase_namespace }} -f /root/supabase/values.oke.yaml .
+#     {% endif %}
+#   args:
+#     chdir: "/root/supabase/github/charts/supabase"
+#   register: helm_install_or_upgrade
 
 - name: Debug Helm result
   debug:

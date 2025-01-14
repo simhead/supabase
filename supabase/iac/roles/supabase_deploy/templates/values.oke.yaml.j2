@@ -62,10 +62,10 @@ auth:
     GOTRUE_SITE_URL: https://{{ supabase_ingress_url }}
     GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
     GOTRUE_MAILER_AUTOCONFIRM: "true"
-    GOTRUE_SMTP_ADMIN_EMAIL: "admin@{{ supabase_ingress_url }}"
-    GOTRUE_SMTP_HOST: "smtp.{{ supabase_ingress_url }}"
+    GOTRUE_SMTP_ADMIN_EMAIL: "no-reply@supabase.orcl.app"
+    GOTRUE_SMTP_HOST: "smtp.email.us-ashburn-1.oci.oraclecloud.com"
     GOTRUE_SMTP_PORT: "587"
-    GOTRUE_SMTP_SENDER_NAME: "sender@{{ supabase_ingress_url }}"
+    GOTRUE_SMTP_SENDER_NAME: "no-reply@supabase.orcl.app"
 
 rest:
   image:

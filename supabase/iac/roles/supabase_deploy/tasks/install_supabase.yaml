@@ -45,6 +45,7 @@
   set_fact:
     jwt_anonKey: "{{ jwt_keys_output.stdout_lines | select('search', 'jwt_anonKey') | first | regex_replace('jwt_anonKey=', '') }}"
     jwt_serviceKey: "{{ jwt_keys_output.stdout_lines | select('search', 'jwt_serviceKey') | first | regex_replace('jwt_serviceKey=', '') }}"
+    jwt_secret: "{{ jwt_keys_output.stdout_lines | select('search', 'jwt_secret') | first | regex_replace('jwt_secret=', '') }}"
   when: jwt_keys_output.stdout_lines is defined and jwt_keys_output.stdout_lines | length > 0
 
 - name: POST - Debug the generated keys
@@ -52,6 +53,7 @@
     msg:
       - "jwt_anonKey: {{ jwt_anonKey }}"
       - "jwt_serviceKey: {{ jwt_serviceKey }}"
+      - "jwt_secret: {{ jwt_secret }}"
 
 - name: Clone Supabase Kubernetes repository
   git:

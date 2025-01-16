@@ -22,7 +22,9 @@ s_hmac_signature=$(echo -n "${jwt_header}.${s_payload}" | openssl dgst -sha256 -
 # Create the full tokens
 jwt_anonKey="${jwt_header}.${a_payload}.${a_hmac_signature}"
 jwt_serviceKey="${jwt_header}.${s_payload}.${s_hmac_signature}"
+jwt_secret="$secret"
 
 # Print the keys
 echo "jwt_anonKey=$jwt_anonKey"
 echo "jwt_serviceKey=$jwt_serviceKey"
+echo "jwt_secret=$jwt_secret"

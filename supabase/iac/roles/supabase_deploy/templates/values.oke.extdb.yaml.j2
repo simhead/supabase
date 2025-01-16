@@ -76,7 +76,21 @@ auth:
 rest:
   image:
     tag: v12.0.1
-
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+    tls: #[]
+      - secretName: supabase-tls-secret
+      #   hosts:
+      #     - {{ supabase_ingress_url }}
+    hosts:
+      - host: {{ supabase_ingress_url }}
+        paths:
+          - path: /
+            pathType: Prefix
+            
 realtime:
   image:
     tag: v2.27.5

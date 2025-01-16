@@ -80,7 +80,7 @@ rest:
       #   hosts:
       #     - {{ supabase_ingress_url }}
     hosts:
-      - host: {{ supabase_ingress_url }}
+      - host: rest.{{ supabase_ingress_url }}
         paths:
           - path: /
             pathType: Prefix

@@ -86,11 +86,11 @@ rest:
       #   hosts:
       #     - {{ supabase_ingress_url }}
     hosts:
-      - host: {{ supabase_ingress_url }}
+      - host: rest.{{ supabase_ingress_url }}
         paths:
           - path: /
             pathType: Prefix
-            
+
 realtime:
   image:
     tag: v2.27.5

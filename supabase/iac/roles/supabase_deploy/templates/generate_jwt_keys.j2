@@ -12,7 +12,8 @@ a_payload=$(echo -n '{"role":"anon","iss":"supabase","iat":'$iat',"exp":'$exp'}'
 s_payload=$(echo -n '{"role":"service_role","iss":"supabase","iat":'$iat',"exp":'$exp'}' | base64 | sed s/\+/-/g | sed 's/\//_/g' | sed -E s/=+$// | tr -d '\n')
 
 # Construct a 40-character secret to sign the token
-secret=$(LC_CTYPE=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 40 | xargs)
+# secret=$(LC_CTYPE=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 40 | xargs)
+secret={{ jwt_secret }}
 hexsecret=$(echo -n "$secret" | xxd -p | tr -d '\n')
 
 # Calculate hmac signature

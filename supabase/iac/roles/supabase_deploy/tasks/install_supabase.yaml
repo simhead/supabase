@@ -19,34 +19,34 @@
 #     jwt_serviceKey: "{{ jwt_keys_output.stdout_lines | select('search', 'jwt_serviceKey') | first | regex_replace('jwt_serviceKey=', '') }}"
 #   when: jwt_keys_output is defined
 
-# - name: Check if jwt_anonKey and jwt_serviceKey are defined or empty
-#   set_fact:
-#     jwt_anonKey: "{{ jwt_anonKey if jwt_anonKey is defined else '' }}"
-#     jwt_serviceKey: "{{ jwt_serviceKey if jwt_serviceKey is defined else '' }}"
+- name: Check if jwt_anonKey and jwt_serviceKey are defined or empty
+  set_fact:
+    jwt_anonKey: "{{ jwt_anonKey if jwt_anonKey is defined else '' }}"
+    jwt_serviceKey: "{{ jwt_serviceKey if jwt_serviceKey is defined else '' }}"
 
-# - name: PRE - Debug the generated keys
-#   debug:
-#     msg:
-#       - "jwt_anonKey: {{ jwt_anonKey }}"
-#       - "jwt_serviceKey: {{ jwt_serviceKey }}"
+- name: PRE - Debug the generated keys
+  debug:
+    msg:
+      - "jwt_anonKey: {{ jwt_anonKey }}"
+      - "jwt_serviceKey: {{ jwt_serviceKey }}"
 
-# - name: Copy the JWT generation script to the target machine
-#   template:
-#     src: generate_jwt_keys.j2
-#     dest: /tmp/generate_jwt_keys.sh
-#     mode: '0755'
+- name: Copy the JWT generation script to the target machine
+  template:
+    src: generate_jwt_keys.j2
+    dest: /tmp/generate_jwt_keys.sh
+    mode: '0755'
 
-# - name: Run the JWT generation script if keys are empty
-#   shell: /tmp/generate_jwt_keys.sh
-#   register: jwt_keys_output
-#   when: jwt_anonKey == '' or jwt_serviceKey == ''
+- name: Run the JWT generation script if keys are empty
+  shell: /tmp/generate_jwt_keys.sh
+  register: jwt_keys_output
+  when: jwt_anonKey == '' or jwt_serviceKey == ''
 
-# - name: Parse the generated keys and update facts
-#   set_fact:
-#     jwt_anonKey: "{{ jwt_keys_output.stdout_lines | select('search', 'jwt_anonKey') | first | regex_replace('jwt_anonKey=', '') }}"
-#     jwt_serviceKey: "{{ jwt_keys_output.stdout_lines | select('search', 'jwt_serviceKey') | first | regex_replace('jwt_serviceKey=', '') }}"
-#     jwt_secret: "{{ jwt_keys_output.stdout_lines | select('search', 'jwt_secret') | first | regex_replace('jwt_secret=', '') }}"
-#   when: jwt_keys_output.stdout_lines is defined and jwt_keys_output.stdout_lines | length > 0
+- name: Parse the generated keys and update facts
+  set_fact:
+    jwt_anonKey: "{{ jwt_keys_output.stdout_lines | select('search', 'jwt_anonKey') | first | regex_replace('jwt_anonKey=', '') }}"
+    jwt_serviceKey: "{{ jwt_keys_output.stdout_lines | select('search', 'jwt_serviceKey') | first | regex_replace('jwt_serviceKey=', '') }}"
+    jwt_secret: "{{ jwt_keys_output.stdout_lines | select('search', 'jwt_secret') | first | regex_replace('jwt_secret=', '') }}"
+  when: jwt_keys_output.stdout_lines is defined and jwt_keys_output.stdout_lines | length > 0
 
 - name: POST - Debug the generated keys
   debug:

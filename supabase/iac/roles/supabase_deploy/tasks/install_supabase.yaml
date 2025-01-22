@@ -117,14 +117,14 @@
 #   when: helm_release_check.stdout != ''
 #   register: helm_upgrade_output
 
-- name: Debug message for Helm release status
-  debug:
-    msg: >
-      {% if helm_release_check.stdout == '' %}
-        The supabase-app Helm release was successfully installed.
-      {% else %}
-        The supabase-app Helm release was successfully upgraded.
-      {% endif %}
+# - name: Debug message for Helm release status
+#   debug:
+#     msg: >
+#       {% if helm_release_check.stdout == '' %}
+#         The supabase-app Helm release was successfully installed.
+#       {% else %}
+#         The supabase-app Helm release was successfully upgraded.
+#       {% endif %}
 
 # - name: Run MinIO client Pod
 #   shell: |

@@ -79,9 +79,10 @@
     mode: '0755'
 
 - name: Check if Helm release exists
-  shell: helm list -n {{ supabase_namespace }} --filter {{ supabase_namespace }} -q
+  shell: helm list -n {{ supabase_namespace }} --filter "^supabase-app$" -q
   register: helm_release_check
-  changed_when: false
+  failed_when: false
+  changed_when: false  # No change if it's just checking for the release
 
 - name: Print the value of postgres_host
   debug:
@@ -100,34 +101,27 @@
   debug:
     msg: "The chosen Helm values file is: '{{ helm_values_file }}'"
     
-- name: Install or upgrade the Helm chart
+- name: Install supabase-app Helm release
   shell: |
-    cd /root/supabase/github/charts/supabase
-    {% if helm_release_check.stdout == '' %}
-    helm install {{ supabase_namespace }} -n {{ supabase_namespace }} -f {{ helm_values_file }} .
-    {% else %}
-    helm upgrade {{ supabase_namespace }} -n {{ supabase_namespace }} -f {{ helm_values_file }} .
-    {% endif %}
-  args:
-    chdir: "/root/supabase/github/charts/supabase"
-  register: helm_install_or_upgrade
+    helm install supabase-app -n {{ supabase_namespace }} -f /root/supabase/values.oke.yaml .
+  when: helm_release_check.stdout == ''
+  register: helm_install_output
 
-# - name: Install or upgrade the Helm chart
-#   shell: |
-#     cd /root/supabase/github/charts/supabase
-#     {% if helm_release_check.stdout == '' %}
-#     helm install {{ supabase_namespace }} -n {{ supabase_namespace }} -f /root/supabase/values.oke.yaml .
-#     {% else %}
-#     helm upgrade {{ supabase_namespace }} -n {{ supabase_namespace }} -f /root/supabase/values.oke.yaml .
-#     {% endif %}
-#   args:
-#     chdir: "/root/supabase/github/charts/supabase"
-#   register: helm_install_or_upgrade
+- name: Upgrade supabase-app Helm release
+  shell: |
+    helm upgrade supabase-app -n {{ supabase_namespace }} -f /root/supabase/values.oke.yaml .
+  when: helm_release_check.stdout != ''
+  register: helm_upgrade_output
 
-- name: Debug Helm result
+- name: Debug message for Helm release status
   debug:
-    msg: "Helm {{ 'installed' if helm_release_check.stdout == '' else 'upgraded' }} successfully"
-
+    msg: >
+      {% if helm_release_check.stdout == '' %}
+        The supabase-app Helm release was successfully installed.
+      {% else %}
+        The supabase-app Helm release was successfully upgraded.
+      {% endif %}
+      
 # - name: Run MinIO client Pod
 #   shell: |
 #     kubectl run minio-client --namespace={{ supabase_namespace }} --image=minio/mc:latest

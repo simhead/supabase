@@ -104,16 +104,18 @@
 - name: Install supabase-app Helm release
   shell: |
     cd /root/supabase/github/charts/supabase
+    helm uninstall supabase-app -n {{ supabase_namespace }}
+    sleep 30s
     helm install supabase-app -n {{ supabase_namespace }} -f /root/supabase/values.oke.yaml .
-  when: helm_release_check.stdout == ''
-  register: helm_install_output
+  # when: helm_release_check.stdout == ''
+  # register: helm_install_output
 
-- name: Upgrade supabase-app Helm release
-  shell: |
-    cd /root/supabase/github/charts/supabase
-    helm upgrade supabase-app -n {{ supabase_namespace }} -f /root/supabase/values.oke.yaml .
-  when: helm_release_check.stdout != ''
-  register: helm_upgrade_output
+# - name: Upgrade supabase-app Helm release
+#   shell: |
+#     cd /root/supabase/github/charts/supabase
+#     helm upgrade supabase-app -n {{ supabase_namespace }} -f /root/supabase/values.oke.yaml .
+#   when: helm_release_check.stdout != ''
+#   register: helm_upgrade_output
 
 - name: Debug message for Helm release status
   debug:

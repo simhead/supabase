@@ -102,6 +102,10 @@
     "release: not found" not in helm_uninstall_output.stderr
   changed_when: "'release: not found' not in helm_uninstall_output.stderr"
 
+- name: Wait for 1 minute to ensure uninstallation is complete
+  ansible.builtin.pause:
+    minutes: 1
+
 - name: Debug Helm uninstall status
   debug:
     msg: >-

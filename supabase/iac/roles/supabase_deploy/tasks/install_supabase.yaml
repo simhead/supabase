@@ -93,7 +93,7 @@
       {% if postgres_host | length == 0 %}
       /root/supabase/values.oke.yaml
       {% else %}
-      /root/supabase/values.oke.extdb.yaml
+      /root/supabase/values.oke.yaml
       {% endif %}
 
 - name: Print the chosen Helm values file

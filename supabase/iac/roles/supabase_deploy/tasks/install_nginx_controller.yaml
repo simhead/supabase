@@ -96,8 +96,6 @@
 - name: Delete old ingress-nginx Helm release if it exists
   shell: |
     helm uninstall ingress-nginx -n ingress-nginx
-    kubectl -n {{ supabase_namespace }} delete ingress rest.{{ supabase_ingress_url }}
-    kubectl -n {{ supabase_namespace }} delete ingress {{ supabase_ingress_url }}    
   register: helm_uninstall_output
   failed_when: >
     helm_uninstall_output.rc != 0 and
@@ -107,6 +105,20 @@
 - name: Wait for 1 minute to ensure uninstallation is complete
   ansible.builtin.pause:
     minutes: 1
+
+- name: Get all ingress resources in the {{ supabase_namespace }} namespace
+  shell: |
+    kubectl get ingress -n {{ supabase_namespace }} -o jsonpath='{.items[*].metadata.name}'
+  register: ingress_names
+  changed_when: false  # This task doesn't change anything
+
+- name: Delete all ingress resources in the {{ supabase_namespace }} namespace
+  shell: |
+    for ingress in {{ ingress_names.stdout | split(" ") }}; do
+      kubectl delete ingress $ingress -n {{ supabase_namespace }} --ignore-not-found
+    done
+  register: kubectl_delete_all_ingresses
+  changed_when: kubectl_delete_all_ingresses.rc == 0
 
 - name: Debug Helm uninstall status
   debug:

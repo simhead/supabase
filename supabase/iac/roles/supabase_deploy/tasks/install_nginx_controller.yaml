@@ -96,6 +96,8 @@
 - name: Delete old ingress-nginx Helm release if it exists
   shell: |
     helm uninstall ingress-nginx -n ingress-nginx
+    kubectl -n {{ supabase_namespace }} delete ingress rest.{{ supabase_ingress_url }}
+    kubectl -n {{ supabase_namespace }} delete ingress {{ supabase_ingress_url }}    
   register: helm_uninstall_output
   failed_when: >
     helm_uninstall_output.rc != 0 and
